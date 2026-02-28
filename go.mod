@@ -6,6 +6,8 @@ retract v1.15.1 // Contains retractions only.
 
 retract v1.15.0 // Published accidentally.
 
+replace github.com/argoproj/notifications-engine => ../notifications-engine
+
 require (
 	cloud.google.com/go/compute/metadata v0.9.0
 	cloud.google.com/go/pubsub v1.49.0

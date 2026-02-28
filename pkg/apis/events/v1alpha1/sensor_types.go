@@ -339,6 +339,9 @@ type TriggerTemplate struct {
 	// Email refers to the trigger designed to send an email notification
 	// +optional
 	Email *EmailTrigger `json:"email,omitempty" protobuf:"bytes,17,opt,name=email"`
+	// WhatsApp refers to the trigger designed to send whatsapp notification message
+	// +optional
+	WhatsApp *WhatsAppTrigger `json:"whatsapp,omitempty" protobuf:"bytes,18,opt,name=whatsapp"`
 }
 
 type ConditionsResetCriteria struct {
@@ -695,6 +698,147 @@ type EmailTrigger struct {
 	// Body refers to the body/content of the email send.
 	// +optional
 	Body string `json:"body,omitempty" protobuf:"bytes,9,opt,name=body"`
+}
+
+// WhatsAppTrigger refers to the specification of the whatsapp notification trigger.
+type WhatsAppTrigger struct {
+	// Parameters is the list of key-value extracted from event's payload that are applied to
+	// the trigger resource.
+	// +optional
+	Parameters []TriggerParameter `json:"parameters,omitempty" protobuf:"bytes,1,rep,name=parameters"`
+	// WhatsAppToken refers to the Kubernetes secret that holds the WhatsApp token required to send messages.
+	WhatsAppToken *corev1.SecretKeySelector `json:"whatsappToken,omitempty" protobuf:"bytes,2,opt,name=whatsappToken"`
+	// PhoneNumberID refers to the phone number ID of the app
+	PhoneNumberID string `json:"phoneNumberID,omitempty" protobuf:"bytes,3,opt,name=phoneNumberID"`
+	// Message refers to the message to send to a WhatsApp user.
+	// For other types of messages it will substitute Caption
+	Message string `json:"message,omitempty" protobuf:"bytes,4,opt,name=message"`
+	// Type refers to the message type: text, image, document, template, interactive
+	Type string `json:"type,omitempty" protobuf:"bytes,5,opt,name=type"`
+	// Recipient refers to the recepient phone number
+	Recipient string `json:"recipient,omitempty" protobuf:"bytes,6,opt,name=recipient"`
+	// Text contains properties of the text message
+	Text WhatsAppText `json:"text,omitempty" protobuf:"bytes,7,opt,name=text"`
+	// Image contains properties of the image
+	Image WhatsAppImage `json:"image,omitempty" protobuf:"bytes,8,opt,name=image"`
+	// Document contains properties of the Document
+	Document WhatsAppDocument `json:"document,omitempty" protobuf:"bytes,9,opt,name=document"`
+	// Template contains properties of the WhatsApp Message Template
+	Template WhatsAppTemplate `json:"template,omitempty" protobuf:"bytes,10,opt,name=template"`
+	// Interactive contains properties of the WhatsApp Interactive Messages
+	Interactive WhatsAppInteractive `json:"interactive,omitempty" protobuf:"bytes,11,opt,name=interactive"`
+}
+
+// WhatsAppText refers to specification of WhatsApp Text Message.
+type WhatsAppText struct {
+	// PreviewURL enables link preview for URLs in the body.
+	// +optional
+	PreviewURL bool `json:"preview_url,omitempty" protobuf:"varint,1,opt,name=preview_url,json=previewUrl"`
+}
+
+//WhatsAppImage refers to specification of WhatsApp Image Message.
+type WhatsAppImage struct {
+	// URL is the image URL. Either URL or ID should be specified
+	// +optional
+	URL string `json:"url,omitempty" protobuf:"bytes,1,opt,name=url"`
+	// ID is the image ID in the WhatsApp storage. Either URL or ID should be specified
+	// +optional
+	ID string `json:"id,omitempty" protobuf:"bytes,2,opt,name=id"`
+}
+
+// WhatsAppDocument refers to specification of WhatsApp Document Message.
+type WhatsAppDocument struct {
+	// URL is the document URL. Either URL or ID should be specified
+	// +optional
+	URL string `json:"url,omitempty" protobuf:"bytes,1,opt,name=url"`
+
+	// ID is the document ID in the WhatsApp storage. Either URL or ID should be specified
+	// +optional
+	ID string `json:"id,omitempty" protobuf:"bytes,2,opt,name=id"`
+
+	// Filename is the name of the document file
+	// +optional
+	Filename string `json:"filename,omitempty" protobuf:"bytes,3,opt,name=filename"`
+}
+
+// WhatsAppTemplate refers to specification of WhatsApp Template Message.
+type WhatsAppTemplate struct {
+	// Language contains template language configuration
+	Language WhatsAppTemplateLanguage `json:"language,omitempty" protobuf:"bytes,2,opt,name=language"`
+
+	// Components contains template components (body, header, button)
+	// +optional
+	Components []WhatsAppTemplateComponent `json:"components,omitempty" protobuf:"bytes,3,rep,name=components"`
+}
+
+type WhatsAppTemplateLanguage struct {
+	// Code is the language code (e.g., "en", "ru", "en_US")
+	Code string `json:"code,omitempty" protobuf:"bytes,1,opt,name=code"`
+}
+
+type WhatsAppTemplateComponent struct {
+	// Type is the component type (body, header, button)
+	Type string `json:"type,omitempty" protobuf:"bytes,1,opt,name=type"`
+
+	// SubType is required for button components
+	// +optional
+	SubType string `json:"sub_type,omitempty" protobuf:"bytes,2,opt,name=sub_type,json=subType"`
+
+	// Index is required for button components
+	// +optional
+	Index string `json:"index,omitempty" protobuf:"bytes,3,opt,name=index"`
+
+	// Parameters contains component parameters
+	// +optional
+	Parameters []WhatsAppTemplateParameter `json:"parameters,omitempty" protobuf:"bytes,4,rep,name=parameters"`
+}
+
+type WhatsAppTemplateParameter struct {
+	// Type of parameter (text, image, document, currency, date_time)
+	Type string `json:"type,omitempty" protobuf:"bytes,1,opt,name=type"`
+
+	// Text parameter
+	// +optional
+	Text string `json:"text,omitempty" protobuf:"bytes,2,opt,name=text"`
+
+	// Image parameter
+	// +optional
+	Image WhatsAppImage `json:"image,omitempty" protobuf:"bytes,3,opt,name=image"`
+
+	// Document parameter
+	// +optional
+	Document WhatsAppDocument `json:"document,omitempty" protobuf:"bytes,4,opt,name=document"`
+}
+
+// WhatsAppInteractive refers to specification of WhatsApp Interactive Message.
+type WhatsAppInteractive struct {
+	// Type defines interactive type (button, list, etc.)
+	Type string `json:"type,omitempty" protobuf:"bytes,1,opt,name=type"`
+
+	// Action contains interactive actions
+	Action WhatsAppInteractiveAction `json:"action,omitempty" protobuf:"bytes,3,opt,name=action"`
+}
+
+type WhatsAppInteractiveAction struct {
+	// Buttons contains reply buttons
+	// +optional
+	Buttons []WhatsAppInteractiveButton `json:"buttons,omitempty" protobuf:"bytes,1,rep,name=buttons"`
+}
+
+type WhatsAppInteractiveButton struct {
+	// Type is button type (reply)
+	Type string `json:"type,omitempty" protobuf:"bytes,1,opt,name=type"`
+
+	// Reply contains reply configuration
+	Reply WhatsAppInteractiveReply `json:"reply,omitempty" protobuf:"bytes,2,opt,name=reply"`
+}
+
+type WhatsAppInteractiveReply struct {
+	// ID is unique button identifier
+	ID string `json:"id,omitempty" protobuf:"bytes,1,opt,name=id"`
+
+	// Title is button label (max 20 chars in API)
+	Title string `json:"title,omitempty" protobuf:"bytes,2,opt,name=title"`
 }
 
 // SlackTrigger refers to the specification of the slack notification trigger.

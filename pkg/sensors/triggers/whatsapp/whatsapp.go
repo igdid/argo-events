@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	notifications "github.com/argoproj/notifications-engine/pkg/services"
 	"go.uber.org/zap"
@@ -53,17 +52,16 @@ func NewWhatsAppTrigger(sensor *v1alpha1.Sensor, trigger *v1alpha1.Trigger, logg
 	}
 
 	whatsappSvc := notifications.NewWhatsAppService(notifications.WhatsAppOptions{
-		Token:    whatsappToken,
-		Username: whatsappTrigger.Sender.Username,
-		Icon:     whatsappTrigger.Sender.Icon,
+		Token:         whatsappToken,
+		PhoneNumberID: whatsappTrigger.PhoneNumberID,
 	})
 
 	return &WhatsAppTrigger{
-		Sensor:     sensor,
-		Trigger:    trigger,
-		Logger:     logger.With(logging.LabelTriggerType, v1alpha1.TriggerTypeWhatsApp),
-		httpClient: httpClient,
-		whatsappSvc:   whatsappSvc,
+		Sensor:      sensor,
+		Trigger:     trigger,
+		Logger:      logger.With(logging.LabelTriggerType, v1alpha1.TriggerTypeWhatsApp),
+		httpClient:  httpClient,
+		whatsappSvc: whatsappSvc,
 	}, nil
 }
 
@@ -110,41 +108,49 @@ func (t *WhatsAppTrigger) Execute(ctx context.Context, events map[string]*v1alph
 
 	whatsappTrigger := t.Trigger.Template.WhatsApp
 
-	channel := whatsappTrigger.Channel
-	if channel == "" {
-		return nil, fmt.Errorf("no whatsapp channel provided")
+	recipient := whatsappTrigger.Recipient
+	if recipient == "" {
+		return nil, fmt.Errorf("no whatsapp recipient provided")
 	}
-	channel = strings.TrimPrefix(channel, "#")
 
 	message := whatsappTrigger.Message
-	attachments := whatsappTrigger.Attachments
-	blocks := whatsappTrigger.Blocks
-	if message == "" && attachments == "" && blocks == "" {
-		return nil, fmt.Errorf("no text to post: At least one of message/attachments/blocks should be provided")
+	if message == "" {
+		return nil, fmt.Errorf("no text to post: message must be provided")
 	}
 
-	t.Logger.Infow("posting to channel...", zap.Any("channelName", channel))
+	t.Logger.Infow("sending message to user...", zap.Any("recipient", recipient))
 
 	notification := notifications.Notification{
 		Message: message,
 		WhatsApp: &notifications.WhatsAppNotification{
-			GroupingKey:     whatsappTrigger.Thread.MessageAggregationKey,
-			NotifyBroadcast: whatsappTrigger.Thread.BroadcastMessageToChannel,
-			Blocks:          blocks,
-			Attachments:     attachments,
+			Type: services.MessageType(whatsappTrigger.Type),
 		},
+	}
+	switch whatsappTrigger.Type {
+	case "text":
+		notification.WhatsApp.Text = whatsappTrigger.Text
+	case "image":
+		notification.WhatsApp.Image = whatsappTrigger.Image
+	case "document":
+		notification.WhatsApp.Document = whatsappTrigger.Document
+	case "template":
+		notification.WhatsApp.Template = whatsappTrigger.Template
+	case "interactive":
+		notification.WhatsApp.Interactive = whatsappTrigger.Interactive
+	default:
+		return nil, fmt.Errorf("unknown message type")
 	}
 	destination := notifications.Destination{
 		Service:   "whatsapp",
-		Recipient: channel,
+		Recipient: recipient,
 	}
 	err := t.whatsappSvc.Send(notification, destination)
 	if err != nil {
-		t.Logger.Errorw("unable to post to channel", zap.Any("channelName", channel), zap.Error(err))
-		return nil, fmt.Errorf("failed to post to channel %s, %w", channel, err)
+		t.Logger.Errorw("unable to post to recipient", zap.Any("recipient", recipient), zap.Error(err))
+		return nil, fmt.Errorf("failed to post to recipient %s, %w", recipient, err)
 	}
 
-	t.Logger.Infow("message successfully sent to channel", zap.Any("message", message), zap.Any("channelName", channel))
+	t.Logger.Infow("message successfully sent to recipient", zap.Any("message", message), zap.Any("recipient", recipient))
 	t.Logger.Info("finished executing WhatsAppTrigger")
 	return nil, nil
 }
