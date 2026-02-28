@@ -123,7 +123,7 @@ func (t *WhatsAppTrigger) Execute(ctx context.Context, events map[string]*v1alph
 	notification := notifications.Notification{
 		Message: message,
 		WhatsApp: &notifications.WhatsAppNotification{
-			Type: services.MessageType(whatsappTrigger.Type),
+			Type: notifications.MessageType(whatsappTrigger.Type),
 		},
 	}
 	switch whatsappTrigger.Type {

@@ -45,7 +45,9 @@ var sensorObj = &v1alpha1.Sensor{
 							},
 							Key: "token",
 						},
-						Channel: "fake-channel",
+						PhoneNumberID: "fake-number-id",
+						Recipient: "fake-recipient",
+						Type: "text",
 						Message: "fake-message",
 					},
 				},
@@ -71,8 +73,10 @@ func TestWhatsAppTrigger_FetchResource(t *testing.T) {
 
 	ot, ok := resource.(*v1alpha1.WhatsAppTrigger)
 	assert.Equal(t, true, ok)
-	assert.Equal(t, "fake-channel", ot.Channel)
+	assert.Equal(t, "fake-recipient", ot.Recipient)
+	assert.Equal(t, "fake-number-id", ot.PhoneNumberID)
 	assert.Equal(t, "fake-message", ot.Message)
+	assert.Equal(t, "text", ot.Type)
 }
 
 func TestWhatsAppTrigger_ApplyResourceParameters(t *testing.T) {
@@ -88,7 +92,7 @@ func TestWhatsAppTrigger_ApplyResourceParameters(t *testing.T) {
 				SpecVersion:     "1.0",
 				Subject:         "example-1",
 			},
-			Data: []byte(`{"channel": "real-channel", "message": "real-message"}`),
+			Data: []byte(`{"recipient": "real-recipient", "message": "real-message"}`),
 		},
 	}
 
@@ -96,9 +100,9 @@ func TestWhatsAppTrigger_ApplyResourceParameters(t *testing.T) {
 		{
 			Src: &v1alpha1.TriggerParameterSource{
 				DependencyName: "fake-dependency",
-				DataKey:        "channel",
+				DataKey:        "recipient",
 			},
-			Dest: "channel",
+			Dest: "recipient",
 		},
 		{
 			Src: &v1alpha1.TriggerParameterSource{
@@ -115,6 +119,6 @@ func TestWhatsAppTrigger_ApplyResourceParameters(t *testing.T) {
 
 	ot, ok := resource.(*v1alpha1.WhatsAppTrigger)
 	assert.Equal(t, true, ok)
-	assert.Equal(t, "real-channel", ot.Channel)
+	assert.Equal(t, "real-recipient", ot.Recipient)
 	assert.Equal(t, "real-message", ot.Message)
 }
