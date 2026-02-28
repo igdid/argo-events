@@ -34,6 +34,7 @@ import (
 	"github.com/argoproj/argo-events/pkg/sensors/triggers/nats"
 	"github.com/argoproj/argo-events/pkg/sensors/triggers/pulsar"
 	"github.com/argoproj/argo-events/pkg/sensors/triggers/slack"
+	"github.com/argoproj/argo-events/pkg/sensors/triggers/whatsapp"
 	standardk8s "github.com/argoproj/argo-events/pkg/sensors/triggers/standard-k8s"
 	"github.com/argoproj/argo-events/pkg/shared/logging"
 )
@@ -133,6 +134,16 @@ func (sensorCtx *SensorContext) GetTrigger(ctx context.Context, trigger *v1alpha
 		}
 		return result
 	}
+
+	if trigger.Template.WhatsApp != nil {
+		result, err := slack.NewWhatsAppTrigger(sensorCtx.sensor, trigger, log, sensorCtx.whatsappHTTPClient)
+		if err != nil {
+			log.Errorw("failed to new a WhatsApp trigger", zap.Error(err))
+			return nil
+		}
+		return result
+	}
+
 
 	if trigger.Template.OpenWhisk != nil {
 		result, err := openwhisk.NewTriggerImpl(sensorCtx.sensor, trigger, sensorCtx.openwhiskClients, log)

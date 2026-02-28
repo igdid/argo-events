@@ -56,6 +56,8 @@ type SensorContext struct {
 	customTriggerClients sharedutil.StringKeyedMap[*grpc.ClientConn]
 	// http client to send slack messages.
 	slackHTTPClient *http.Client
+	// http client to send whatsapp messages.
+	whatsappHTTPClient *http.Client
 	// kafkaProducers holds references to the active kafka producers
 	kafkaProducers sharedutil.StringKeyedMap[sarama.AsyncProducer]
 	// pulsarProducers holds references to the active pulsar producers
@@ -85,6 +87,9 @@ func NewSensorContext(kubeClient kubernetes.Interface, dynamicClient dynamic.Int
 		httpClients:          sharedutil.NewStringKeyedMap[*http.Client](),
 		customTriggerClients: sharedutil.NewStringKeyedMap[*grpc.ClientConn](),
 		slackHTTPClient: &http.Client{
+			Timeout: time.Minute * 5,
+		},
+		whatsappHTTPClient: &http.Client{
 			Timeout: time.Minute * 5,
 		},
 		kafkaProducers:         sharedutil.NewStringKeyedMap[sarama.AsyncProducer](),
